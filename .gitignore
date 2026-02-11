@@ -1,0 +1,10 @@
+# Datos locales
+.env
+.env.local
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

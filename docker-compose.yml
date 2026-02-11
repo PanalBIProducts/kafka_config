@@ -1,5 +1,7 @@
-# Configuración Apache Kafka (modo KRaft, sin Zookeeper)
-# Imagen: apache/kafka (asegúrate de tenerla descargada: docker pull apache/kafka)
+# =============================================================================
+# Kafka - Configuración resiliente para desarrollo/producción ligera
+# Modo KRaft (sin Zookeeper)
+# =============================================================================
 
 services:
   kafka:
@@ -7,23 +9,51 @@ services:
     container_name: kafka
     hostname: kafka
     ports:
-      - "9092:9092"   # listeners
-      - "9093:9093"   # controller
+      - "9092:9092"
+      - "9093:9093"
     environment:
+      # --- KRaft (sin Zookeeper) ---
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # --- Persistencia y logs ---
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      # --- Retención y limpieza (evita disco lleno) ---
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+      KAFKA_LOG_SEGMENT_BYTES: 134217728
+      KAFKA_LOG_CLEANUP_POLICY: delete
+      # --- Timeouts y resiliencia ---
+      KAFKA_REQUEST_TIMEOUT_MS: 30000
+      KAFKA_SESSION_TIMEOUT_MS: 10000
+      KAFKA_REPLICA_FETCH_MAX_WAIT_MS: 500
+      KAFKA_REPLICA_LAG_TIME_MAX_MS: 30000
+      # --- Reintentos y durabilidad ---
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
     volumes:
       - kafka-data:/var/lib/kafka/data
     restart: unless-stopped
+    # Límites para evitar que Kafka consuma toda la RAM
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
       retries: 5
       start_period: 30s
+    # Tiempo extra para apagado ordenado (evita corrupción)
+    stop_grace_period: 30s
 
 volumes:
   kafka-data:

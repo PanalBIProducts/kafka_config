@@ -27,11 +27,16 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       # --- Persistencia y logs ---
       KAFKA_LOG_DIRS: /var/lib/kafka/data
-      # --- Retención y limpieza (evita disco lleno) ---
-      KAFKA_LOG_RETENTION_HOURS: 168
-      KAFKA_LOG_RETENTION_BYTES: 1073741824
-      KAFKA_LOG_SEGMENT_BYTES: 134217728
+      # --- Retención y limpieza ---
+      # 30 días de retención (720h) — suficiente para recuperación y auditoría
+      KAFKA_LOG_RETENTION_HOURS: 720
+      # 5 GB máx por partición antes de borrar segmentos antiguos
+      KAFKA_LOG_RETENTION_BYTES: 5368709120
+      # Segmentos de 512 MB — reduce cantidad de archivos en disco
+      KAFKA_LOG_SEGMENT_BYTES: 536870912
       KAFKA_LOG_CLEANUP_POLICY: delete
+      # Chequeo de retención cada 5 min (default) — limpia segmentos expirados
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
       # --- Timeouts y resiliencia ---
       KAFKA_REQUEST_TIMEOUT_MS: 30000
       KAFKA_SESSION_TIMEOUT_MS: 10000

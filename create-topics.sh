@@ -36,6 +36,9 @@ create_topic "erp.notifications" 3
 create_topic "erp.sales"         3
 create_topic "erp.day-close"     1
 
+# Topics del marketplace-erp (1 partición)
+create_topic "marketplace.stats" 1
+
 # Topics de infraestructura (1 partición)
 create_topic "erp.replies"       1
 create_topic "erp.commands"      1

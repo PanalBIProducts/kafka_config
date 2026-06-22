@@ -9,7 +9,10 @@ services:
     container_name: kafka
     hostname: kafka
     ports:
-      - "9092:9092"
+      # Solo loopback: el broker no se publica en interfaces públicas.
+      # Ambos backends conectan vía localhost (advertised listener = localhost:9092).
+      # Refuerzo en VPS: `ufw deny 9092`. SASL/ACL se añaden en T-21.
+      - "127.0.0.1:9092:9092"
     environment:
       # --- KRaft (sin Zookeeper) - Config según doc oficial apache/kafka Docker Hub ---
       KAFKA_NODE_ID: 1
